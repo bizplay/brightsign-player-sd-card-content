@@ -4,7 +4,7 @@ Sub Main()
 
   ' set html page source and optionally rotation ("rot270" for counterclockwise rotation)
   ' config = { url: "http://play.playr.biz", transform:"rot90" }
-  config = { url: "http://play.playr.biz" }
+  config = { url: "http://playr.biz/1160/84" }
   htmlWidget = CreateObject("roHtmlWidget", rectangle, config)
   htmlWidget.SetPort(messagePort)
 
