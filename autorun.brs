@@ -1,7 +1,7 @@
 Sub Main()
-  ' messagePort = CreateObject("roMessagePort")
-  ' rectangle = CreateObject("roRectangle", 0, 0, 1920, 1080)
-  ' config = { url: "http://playr.biz/1160/84" }
+  messagePort = CreateObject("roMessagePort")
+  rectangle = CreateObject("roRectangle", 0, 0, 1920, 1080)
+  config = { url: "http://playr.biz/1160/84" }
   '   url: "http://playr.biz/1160/84"
   '   nodejs_enabled: false,
   '   focus_enabled: false,
@@ -101,4 +101,4 @@ Function CreateHtmlWidget(url$ as String) as Object
 
   print "CreateHtmlWidget end"
   return htmlWidget
-End Sub
+End Function
