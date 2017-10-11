@@ -1,7 +1,7 @@
 Sub Main()
-  messagePort = CreateObject("roMessagePort")
-  rectangle = CreateObject("roRectangle", 0, 0, 1920, 1080)
-  config = { url: "http://playr.biz/1160/84" }
+  ' messagePort = CreateObject("roMessagePort")
+  ' rectangle = CreateObject("roRectangle", 0, 0, 1920, 1080)
+  ' config = { url: "http://playr.biz/1160/84" }
   '   url: "http://playr.biz/1160/84"
   '   nodejs_enabled: false,
   '   focus_enabled: false,
@@ -14,8 +14,9 @@ Sub Main()
   '   transform: "identity",
   '   hwz_default: "on"
   ' }
-  htmlWidget = CreateObject("roHtmlWidget", rectangle, config)
-  htmlWidget.SetPort(messagePort)
+  ' htmlWidget = CreateObject("roHtmlWidget", rectangle, config)
+  htmlWidget = CreateHtmlWidget("http://playr.biz/1160/84")
+  ' htmlWidget.SetPort(messagePort)
 
   ' sleep/wait 10 seconds
   sleep(10000)
@@ -37,12 +38,14 @@ Sub Main()
   end while
 End Sub
 
-'Sub CreateHtmlWidget(url$ as String)
-'  vm = CreateObject("roVideoMode")
-'  vm.setMode("auto")
-'  width = vm.GetResX()
-'  height = vm.GetResY()
-'  rect = CreateObject("roRectangle", 0, 0, width, height)
+Sub CreateHtmlWidget(url$ as String)
+  print "CreateHtmlWidget start"
+  messagePort = CreateObject("roMessagePort")
+  videoMode = CreateObject("roVideoMode")
+  videoMode.setMode("auto")
+  width = videoMode.GetResX()
+  height = videoMode.GetResY()
+  rect = CreateObject("roRectangle", 0, 0, width, height)
 
   ' config = {
   ' nodejs_enabled:(Boolean) Enables Node.js on the widget. This value is False by default.
@@ -74,14 +77,18 @@ End Sub
   ' feature:(string) The security feature to be enabled. Accepted values are "websecurity" and "camera_enabled".
   ' enabled:(bool) Enables or disables the security feature.
   ' }
-'  htmlWidget = CreateObject("roHtmlWidget", rect)
-'  htmlWidget.EnableSecurity(false)
-'  htmlWidget.SetUrl(url$)
-'  htmlWidget.EnableJavascript(true)
-'  ' htmlWidget.StartInspectorServer(2999)
-'  htmlWidget.EnableMouseEvents(false)
-'  htmlWidget.AllowJavaScriptUrls({ all: "*" })
-'  htmlWidget.SetHWZDefault("on")
-'  htmlWidget.setPort(gaa.mp)
-'  return htmlWidget
+  htmlWidget = CreateObject("roHtmlWidget", rect)
+  htmlWidget.SetUrl(url$)
+  htmlWidget.EnableSecurity(false)
+  htmlWidget.EnableJavascript(true)
+  htmlWidget.EnableCanvas2dAcceleration(true)
+  htmlWidget.ForceGpuRasterization(true)
+  ' htmlWidget.StartInspectorServer(2999)
+  htmlWidget.EnableMouseEvents(false)
+  htmlWidget.AllowJavaScriptUrls({ all: "*" })
+  htmlWidget.SetHWZDefault("on")
+  htmlWidget.setPort(messagePort)
+
+  print "CreateHtmlWidget end"
+  return htmlWidget
 'End Sub
