@@ -38,7 +38,7 @@ Sub Main()
   end while
 End Sub
 
-Sub CreateHtmlWidget(url$ as String)
+Function CreateHtmlWidget(url$ as String) as Object
   print "CreateHtmlWidget start"
   messagePort = CreateObject("roMessagePort")
   videoMode = CreateObject("roVideoMode")
@@ -49,7 +49,7 @@ Sub CreateHtmlWidget(url$ as String)
   else
     width = 1920
     height = 1080
-    print "CreateHtmlWidget creating videoMode went wrong"
+    print "CreateHtmlWidget: creating videoMode went wrong"
   endif
   rect = CreateObject("roRectangle", 0, 0, width, height)
 
@@ -83,17 +83,21 @@ Sub CreateHtmlWidget(url$ as String)
   ' feature:(string) The security feature to be enabled. Accepted values are "websecurity" and "camera_enabled".
   ' enabled:(bool) Enables or disables the security feature.
   ' }
-  htmlWidget = CreateObject("roHtmlWidget", rect)
-  htmlWidget.SetUrl(url$)
-  htmlWidget.EnableSecurity(false)
-  htmlWidget.EnableJavascript(true)
-  htmlWidget.EnableCanvas2dAcceleration(true)
-  htmlWidget.ForceGpuRasterization(true)
-  ' htmlWidget.StartInspectorServer(2999)
-  htmlWidget.EnableMouseEvents(false)
-  htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  htmlWidget.SetHWZDefault("on")
-  htmlWidget.setPort(messagePort)
+
+  config = { url: "http://playr.biz/1160/84" }
+
+
+  htmlWidget = CreateObject("roHtmlWidget", rect, config)
+  ' htmlWidget.SetUrl(url$)
+  ' htmlWidget.EnableSecurity(false)
+  ' htmlWidget.EnableJavascript(true)
+  ' htmlWidget.EnableCanvas2dAcceleration(true)
+  ' htmlWidget.ForceGpuRasterization(true)
+  ' ' htmlWidget.StartInspectorServer(2999)
+  ' htmlWidget.EnableMouseEvents(false)
+  ' htmlWidget.AllowJavaScriptUrls({ all: "*" })
+  ' htmlWidget.SetHWZDefault("on")
+  ' htmlWidget.setPort(messagePort)
 
   print "CreateHtmlWidget end"
   return htmlWidget
