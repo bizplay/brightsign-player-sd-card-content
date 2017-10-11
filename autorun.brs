@@ -1,8 +1,8 @@
 Sub Main()
   messagePort = CreateObject("roMessagePort")
   rectangle = CreateObject("roRectangle", 0, 0, 1920, 1080)
-  config = {
-    url: "http://playr.biz/1160/84"
+  config = { url: "http://playr.biz/1160/84" }
+  '   url: "http://playr.biz/1160/84"
   '   nodejs_enabled: false,
   '   focus_enabled: false,
   '   mouse_enabled: false,
@@ -13,7 +13,7 @@ Sub Main()
   '   brightsign_js_objects_enabled: false,
   '   transform: "identity",
   '   hwz_default: "on"
-  }
+  ' }
   htmlWidget = CreateObject("roHtmlWidget", rectangle, config)
   htmlWidget.SetPort(messagePort)
 
@@ -23,26 +23,26 @@ Sub Main()
   htmlWidget.Show()
   while true
     message = wait(0, messagePort)
-    print "type(message) = "; type(message)
+    print "type(message) = ";type(message)
 
     if type(message) = "roHtmlWidgetEvent" then
       eventData = message.GetData()
       if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
-        print "reason = "; eventData.reason
+        print "reason = ";eventData.reason
         if eventData.reason = "load-error" then
-          print "message = "; eventData.message
+          print "message = ";eventData.message
         endif
       endif
     endif
   end while
 End Sub
 
-Sub CreateHtmlWidget(url$ as String)
-  vm = CreateObject("roVideoMode")
-  vm.setMode("auto")
-  width = vm.GetResX()
-  height = vm.GetResY()
-  rect = CreateObject("roRectangle", 0, 0, width, height)
+'Sub CreateHtmlWidget(url$ as String)
+'  vm = CreateObject("roVideoMode")
+'  vm.setMode("auto")
+'  width = vm.GetResX()
+'  height = vm.GetResY()
+'  rect = CreateObject("roRectangle", 0, 0, width, height)
 
   ' config = {
   ' nodejs_enabled:(Boolean) Enables Node.js on the widget. This value is False by default.
@@ -74,17 +74,14 @@ Sub CreateHtmlWidget(url$ as String)
   ' feature:(string) The security feature to be enabled. Accepted values are "websecurity" and "camera_enabled".
   ' enabled:(bool) Enables or disables the security feature.
   ' }
-  config = {
-    url: "http://playr.biz/1160/84"
-  }
-  htmlWidget = CreateObject("roHtmlWidget", rect, config)
-  htmlWidget.EnableSecurity(false)
-  htmlWidget.SetUrl(url$)
-  htmlWidget.EnableJavascript(true)
-  ' htmlWidget.StartInspectorServer(2999)
-  htmlWidget.EnableMouseEvents(false)
-  htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  htmlWidget.SetHWZDefault("on")
-  htmlWidget.setPort(gaa.mp)
-  return htmlWidget
-End Sub
+'  htmlWidget = CreateObject("roHtmlWidget", rect)
+'  htmlWidget.EnableSecurity(false)
+'  htmlWidget.SetUrl(url$)
+'  htmlWidget.EnableJavascript(true)
+'  ' htmlWidget.StartInspectorServer(2999)
+'  htmlWidget.EnableMouseEvents(false)
+'  htmlWidget.AllowJavaScriptUrls({ all: "*" })
+'  htmlWidget.SetHWZDefault("on")
+'  htmlWidget.setPort(gaa.mp)
+'  return htmlWidget
+'End Sub
