@@ -42,9 +42,15 @@ Sub CreateHtmlWidget(url$ as String)
   print "CreateHtmlWidget start"
   messagePort = CreateObject("roMessagePort")
   videoMode = CreateObject("roVideoMode")
-  videoMode.setMode("auto")
-  width = videoMode.GetResX()
-  height = videoMode.GetResY()
+  if type(videoMode) = "roVideoMode" then
+    videoMode.setMode("auto")
+    width = videoMode.GetResX()
+    height = videoMode.GetResY()
+  else
+    width = 1920
+    height = 1080
+    print "CreateHtmlWidget creating videoMode went wrong"
+  endif
   rect = CreateObject("roRectangle", 0, 0, width, height)
 
   ' config = {
@@ -91,4 +97,4 @@ Sub CreateHtmlWidget(url$ as String)
 
   print "CreateHtmlWidget end"
   return htmlWidget
-'End Sub
+End Sub
