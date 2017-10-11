@@ -1,18 +1,40 @@
 Sub Main(args)
+  print "AUTORUN.BRS has started"
   url$ = "http://playr.biz/1160/84"
 
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
-  print "url = ";url$
 
   Initialise()
-  LogText("url = " + url$)
+  LogText("url = " + url$, "info")
   CreateHtmlWidget(url$)
-  HandleEvents()
+  ' HandleEvents()
+
+  ' sleep/wait 10 seconds
+  sleep(10000)
+  globalAssociativeArray = GetGlobalAA()
+
+  globalAssociativeArray.htmlWidget.Show()
+
+  while true
+    message = wait(0, globalAssociativeArray.messagePort)
+    LogText("type(message) = " + type(message), "info")
+
+    if type(message) = "roHtmlWidgetEvent" then
+      eventData = message.GetData()
+      if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
+        LogText("reason = " + eventData.reason, "info")
+        if eventData.reason = "load-error" then
+          LogText("message = " + eventData.message, "error")
+        endif
+      endif
+    endif
+  end while
 End Sub
 
 Function Initialise()
+  LogText("Initialise start", "info")
   globalAssociativeArray = GetGlobalAA()
 
   ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
@@ -42,14 +64,18 @@ Function Initialise()
     dwsAA["port"] = "80"
     networkConfiguration.SetupDWS(dwsAA)
     networkConfiguration.Apply()
+    LogText("Network configuration has been applied", "info")
   else
+    LogText("Network configuration could not be created", "error")
   endif
 
   globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
   globalAssociativeArray.networkHotPlug.setPort(globalAssociativeArray.messagePort)
+  LogText("Initialise end", "info")
 End Function
 
 Sub CreateHtmlWidget(url$ as String)
+  LogText("CreateHtmlWidget start", "info")
   globalAssociativeArray = GetGlobalAA()
   width = globalAssociativeArray.videoMode.GetResX()
   height = globalAssociativeArray.videoMode.GetResY()
@@ -71,11 +97,13 @@ Sub CreateHtmlWidget(url$ as String)
   ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
   ' globalAssociativeArray.htmlWidget.SetLocalStorageDir()
   ' globalAssociativeArray.htmlWidget.SetLocalStorageQuota()
-  globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
-  globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
+  ' globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
+  ' globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
+  LogText("CreateHtmlWidget end", "info")
 End Sub
 
 Sub HandleEvents()
+  LogText("HandleEvents start", "info")
   globalAssociativeArray = GetGlobalAA()
   receivedIpAddr = (GetNetworkAddress() <> "")
   receivedLoadFinished = false
@@ -83,9 +111,9 @@ Sub HandleEvents()
   while true
     ' establish receivedIpAddr and receivedLoadFinished
     event = wait(0, globalAssociativeArray.messagePort)
-    LogText("Received event " + type(event))
+    LogText("Received event " + type(event), "info")
     if type(event) = "roNetworkAttached" then
-      LogText("Received roNetworkAttached")
+      LogText("Received roNetworkAttached", "info")
       receivedIpAddr = true
     else if type(event) = "roHtmlWidgetEvent" then
       eventData = event.GetData()
@@ -107,41 +135,20 @@ Sub HandleEvents()
       if event.GetInt() = 12 then
         stop
       else
-        LogText("roGpioButton with value other than 12 ", "info")
+        LogText("roGpioButton with value other than 12", "info")
       endif
     else
       LogText("Unhandled event: " + type(event), "warning")
     endif
 
     if receivedIpAddr and receivedLoadFinished then
-      LogText("show HTML widget", "info")
+      LogText("Show HTML widget", "info")
       globalAssociativeArray.htmlWidget.Show()
       globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
       receivedIpAddr = false
       receivedLoadFinished = false
     endif
   endwhile
-End Sub
-
-Sub InitialiseLog()
-  dateTime = CreateObject("roDateTime")
-
-  ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
-  fileName$ = "log-" + dateTime.getYear().ToStr() + dateTime.getMonth().ToStr() + dateTime.getDay().ToStr() + ".txt"
-  m.logFile = CreateObject("roAppendFile", fileName$)
-  if type(m.logFile) = "roAppendFile" then
-    return
-  endif
-
-  m.logFile = CreateObject("roCreateFile", fileName$)
-End Sub
-
-Sub InitialiseSerialPort()
-  globalAssociativeArray = GetGlobalAA()
-
-  globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
-  messagePort = CreateObject("roMessagePort")
-  globalAssociativeArray.serialPort.SetLineEventPort(messagePort)
 End Sub
 
 Sub LogText(text$ as String, level$ as String)
@@ -159,34 +166,73 @@ Sub LogText(text$ as String, level$ as String)
   endif
 
   print filler$;text$
-  ' To use this: msgPort.PostBSMessage({text: "my message"});
-  m.logFile.SendLine(text$)
-  m.logFile.AsyncFlush()
-  globalAssociativeArray.serialPort.SendLine(msg)
+  if type(m.logFile) = "roAppendFile" then
+    ' To use this: msgPort.PostBSMessage({text: "my message"});
+    m.logFile.SendLine(filler$ + text$)
+    m.logFile.AsyncFlush()
+  end
+  if type(globalAssociativeArray.serialPort) = "roSerialPort" then
+    globalAssociativeArray.serialPort.SendLine(filler$ + text$)
+  endif
 End Sub
 
 Sub CreateNetworkConfiguration()
+  LogText("CreateNetworkConfiguration start", "info")
   networkConfiguration = CreateObject("roNetworkConfiguration", 0)
   if type(networkConfiguration) <> "roNetworkConfiguration" then
     networkConfiguration = CreateObject("roNetworkConfiguration", 1)
     if type(networkConfiguration) <> "roNetworkConfiguration" then
-      print "Error: network configuration could not be created"
+      LogText("Network configuration could not be created", "error")
     endif
   endif
+
+  LogText("CreateNetworkConfiguration end", "info")
   return networkConfiguration
 End Sub
 
 Sub GetIPAddress()
+  LogText("GetIPAddress start", "info")
   ipAddr = ""
   networkConfiguration = CreateNetworkConfiguration()
 
-  if type(networkConfiguration)= "roNetworkConfiguration" then
+  if type(networkConfiguration) = "roNetworkConfiguration" then
     currentConfig = networkConfiguration.GetCurrentConfig()
     if currentConfig.ip4_address <> "" then
       ' We already have an IP addr
       ipAddr = currentConfig.ip4_address
-      LogText("Assigned IP address: " + ipAddr)
+      LogText("Assigned IP address: " + ipAddr, "info")
     endif
   endif
+
+  LogText("GetIPAddress end", "info")
   return ipAddr
+End Sub
+
+Sub InitialiseLog()
+  LogText("InitialiseLog start", "info")
+  dateTime = CreateObject("roDateTime")
+
+  ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
+  ' fileName$ = "log-" + dateTime.getYear().ToStr() + dateTime.getMonth().ToStr() + dateTime.getDay().ToStr() + ".txt"
+  fileName$ = "log.txt"
+  m.logFile = CreateObject("roAppendFile", fileName$)
+  if type(m.logFile) = "roAppendFile" then
+    return
+  endif
+
+  m.logFile = CreateObject("roCreateFile", fileName$)
+  LogText("InitialiseLog end", "info")
+End Sub
+
+Sub InitialiseSerialPort()
+  LogText("InitialiseSerialPort start", "info")
+  globalAssociativeArray = GetGlobalAA()
+
+  globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
+  if type(globalAssociativeArray.serialPort) = "roSerialPort" then
+    messagePort = CreateObject("roMessagePort")
+    globalAssociativeArray.serialPort.SetLineEventPort(messagePort)
+  else
+    LogText("Serial port could not be created", "error")
+  endif
 End Sub
