@@ -150,6 +150,7 @@ Sub Initialise(url$ as String)
 
   ' for debuging/diagnostics; open log and serial port
   InitialiseLog()
+  LogText("*******************************************************************", "info")
   ' InitialiseSerialPort()
   ' Enable mouse cursor
   ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
@@ -233,20 +234,20 @@ Sub InitialiseLog()
   LogText("InitialiseLog end", "info")
 EndSub
 
-' Sub InitialiseSerialPort()
-'   LogText("InitialiseSerialPort start", "info")
-'   globalAssociativeArray = GetGlobalAA()
+Sub InitialiseSerialPort()
+  LogText("InitialiseSerialPort start", "info")
+  globalAssociativeArray = GetGlobalAA()
 
-'   globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
-'   if type(globalAssociativeArray.serialPort) = "roSerialPort" then
-'     ' use the global message port
-'     ' messagePort = CreateObject("roMessagePort")
-'     globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
-'   else
-'     LogText("Serial port could not be created", "error")
-'   endif
-'   LogText("InitialiseSerialPort end", "info")
-' EndSub
+  globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
+  if type(globalAssociativeArray.serialPort) = "roSerialPort" then
+    ' use the global message port
+    ' messagePort = CreateObject("roMessagePort")
+    globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
+  else
+    LogText("Serial port could not be created", "error")
+  endif
+  LogText("InitialiseSerialPort end", "info")
+EndSub
 
 Sub InitialiseNetworkConfiguration()
   LogText("InitialiseNetworkConfiguration start", "info")
@@ -257,8 +258,8 @@ Sub InitialiseNetworkConfiguration()
     LogText("InitialiseNetworkConfiguration: network configuration created", "info")
     dwsAA = CreateObject("roAssociativeArray")
     dwsAA["port"] = "80"
-    globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
-    globalAssociativeArray.networkConfiguration.Apply()
+    ' globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
+    ' globalAssociativeArray.networkConfiguration.Apply()
     LogText("InitialiseNetworkConfiguration: network configuration has been applied", "info")
   else
     LogText("InitialiseNetworkConfiguration: network configuration could not be created", "error")
