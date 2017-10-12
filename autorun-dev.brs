@@ -1,22 +1,27 @@
 Sub Main(args)
-  print "AUTORUN.BRS has started"
+  print "autorun.brs started"
+  tmpFile = CreateObject("roCreateFile", "main0.txt")
   url$ = "http://playr.biz/1160/84"
 
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
 
-  Initialise()
+  tmpFile = CreateObject("roCreateFile", "main1.txt")
+  Initialise(url$)
+  tmpFile = CreateObject("roCreateFile", "main2.txt")
   LogText("url = " + url$, "info")
-  CreateHtmlWidget(url$)
-  ' HandleEvents()
+  ' CreateHtmlWidget(url$)
 
   ' sleep/wait 10 seconds
   sleep(10000)
+  tmpFile = CreateObject("roCreateFile", "main3.txt")
   globalAssociativeArray = GetGlobalAA()
 
   globalAssociativeArray.htmlWidget.Show()
+  tmpFile = CreateObject("roCreateFile", "main4.txt")
 
+  ' HandleEvents()
   while true
     message = wait(0, globalAssociativeArray.messagePort)
     LogText("type(message) = " + type(message), "info")
@@ -30,35 +35,7 @@ Sub Main(args)
       endif
     endif
   end while
-End Sub
-
-Sub CreateHtmlWidget(url$ as String)
-  LogText("CreateHtmlWidget start", "info")
-  globalAssociativeArray = GetGlobalAA()
-  width = globalAssociativeArray.videoMode.GetResX()
-  height = globalAssociativeArray.videoMode.GetResY()
-  rectangle = CreateObject("roRectangle", 0, 0, width, height)
-
-  globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
-  globalAssociativeArray.htmlWidget.EnableSecurity(false)
-  globalAssociativeArray.htmlWidget.SetUrl(url$)
-  globalAssociativeArray.htmlWidget.EnableJavascript(true)
-  ' use only for debugging
-  globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
-  globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
-  globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  globalAssociativeArray.htmlWidget.SetHWZDefault("on")
-  globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
-  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true)
-  globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
-  ' globalAssociativeArray.htmlWidget.SetAppCacheDir()
-  ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
-  ' globalAssociativeArray.htmlWidget.SetLocalStorageDir()
-  ' globalAssociativeArray.htmlWidget.SetLocalStorageQuota()
-  ' globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
-  ' globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
-  LogText("CreateHtmlWidget end", "info")
-End Sub
+EndSub
 
 Sub HandleEvents()
   LogText("HandleEvents start", "info")
@@ -107,12 +84,13 @@ Sub HandleEvents()
       receivedLoadFinished = false
     endif
   endwhile
-End Sub
+EndSub
 
 Sub LogText(text$ as String, level$ as String)
   globalAssociativeArray = GetGlobalAA()
   filler$ = ""
   if level$ = "info" then
+    filler$ = ""
   else if level$ = "warning" then
     filler$ = "===> "
   else if level$ = "error" then
@@ -132,7 +110,7 @@ Sub LogText(text$ as String, level$ as String)
   if type(globalAssociativeArray.serialPort) = "roSerialPort" then
     globalAssociativeArray.serialPort.SendLine(filler$ + text$)
   endif
-End Sub
+EndSub
 
 Function CreateNetworkConfiguration() as Object
   LogText("CreateNetworkConfiguration start", "info")
@@ -146,7 +124,7 @@ Function CreateNetworkConfiguration() as Object
 
   LogText("CreateNetworkConfiguration end", "info")
   return networkConfiguration
-End Function
+EndFunction
 
 Function GetIPAddress() as String
   LogText("GetIPAddress start", "info")
@@ -165,20 +143,19 @@ Function GetIPAddress() as String
 
   LogText("GetIPAddress end", "info")
   return ipAddr
-End Function
+EndFunction
 
-Sub Initialise()
+Sub Initialise(url$ as String)
   LogText("Initialise start", "info")
   globalAssociativeArray = GetGlobalAA()
 
   ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
   ' EnableZoneSupport(1)
-  EnableZoneSupport(false)
+  ' EnableZoneSupport(false)
 
   ' for debuging/diagnostics; open log and serial port
   InitialiseLog()
   ' InitialiseSerialPort()
-
   ' Enable mouse cursor
   ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
   ' globalAssociativeArray.touchScreen.EnableCursor(true)
@@ -190,6 +167,8 @@ Sub Initialise()
 
   globalAssociativeArray.videoMode = CreateObject("roVideoMode")
   globalAssociativeArray.videoMode.setMode("auto")
+
+  InitialiseHtmlWidget(url$)
 
   ' set DWS on device
   ' globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
@@ -207,7 +186,40 @@ Sub Initialise()
   globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
   globalAssociativeArray.networkHotPlug.setPort(globalAssociativeArray.messagePort)
   LogText("Initialise end", "info")
-End Sub
+EndSub
+
+Sub InitialiseHtmlWidget(url$ as String)
+  LogText("InitialiseHtmlWidget start", "info")
+  globalAssociativeArray = GetGlobalAA()
+  if type(globalAssociativeArray.videoMode) = "roVideoMode"
+    width = globalAssociativeArray.videoMode.GetResX()
+    height = globalAssociativeArray.videoMode.GetResY()
+  else
+    width = 1920
+    height = 1080
+  endif
+  rectangle = CreateObject("roRectangle", 0, 0, width, height)
+
+  globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
+  globalAssociativeArray.htmlWidget.SetUrl(url$)
+  globalAssociativeArray.htmlWidget.EnableSecurity(false)
+  globalAssociativeArray.htmlWidget.EnableJavascript(true)
+  globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
+  ' use only for debugging
+  ' globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
+  globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
+  globalAssociativeArray.htmlWidget.SetHWZDefault("on")
+  globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
+  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true)
+  globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
+  ' globalAssociativeArray.htmlWidget.SetAppCacheDir()
+  ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
+  ' globalAssociativeArray.htmlWidget.SetLocalStorageDir()
+  ' globalAssociativeArray.htmlWidget.SetLocalStorageQuota()
+  ' globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
+  ' globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
+  LogText("InitialiseHtmlWidget end", "info")
+EndSub
 
 Sub InitialiseLog()
   LogText("InitialiseLog start", "info")
@@ -223,7 +235,7 @@ Sub InitialiseLog()
 
   m.logFile = CreateObject("roCreateFile", fileName$)
   LogText("InitialiseLog end", "info")
-End Sub
+EndSub
 
 Sub InitialiseSerialPort()
   LogText("InitialiseSerialPort start", "info")
@@ -237,7 +249,7 @@ Sub InitialiseSerialPort()
   else
     LogText("Serial port could not be created", "error")
   endif
-End Sub
+EndSub
 
 Sub InitialiseNetworkConfiguration()
   LogText("InitialiseNetworkConfiguration start", "info")
@@ -254,4 +266,4 @@ Sub InitialiseNetworkConfiguration()
     LogText("Network configuration could not be created", "error")
   endif
   LogText("InitialiseNetworkConfiguration end", "info")
-End Sub
+EndSub
