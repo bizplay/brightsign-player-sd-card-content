@@ -127,12 +127,16 @@ Function GetIPAddress() as String
   ' networkConfiguration = CreateNetworkConfiguration()
 
   if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
-    currentConfig = networkConfiguration.GetCurrentConfig()
+    currentConfig = globalAssociativeArray.networkConfiguration.GetCurrentConfig()
     if currentConfig.ip4_address <> "" then
       ' We already have an IP addr
       ipAddr = currentConfig.ip4_address
-      LogText("Assigned IP address: " + ipAddr, "info")
+      LogText("GetIPAddress: Assigned IP address: " + ipAddr, "info")
+    else
+      LogText("GetIPAddress: no IP address found", "info")
     endif
+  else
+    LogText("GetIPAddress: no networkConfiguration found", "error")
   endif
 
   LogText("GetIPAddress end", "info")
