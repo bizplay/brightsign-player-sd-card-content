@@ -1,22 +1,7 @@
 Sub Main()
   messagePort = CreateObject("roMessagePort")
-  rectangle = CreateObject("roRectangle", 0, 0, 1920, 1080)
-  config = { url: "http://playr.biz/1160/84" }
-  '   url: "http://playr.biz/1160/84"
-  '   nodejs_enabled: false,
-  '   focus_enabled: false,
-  '   mouse_enabled: false,
-  '   scrollbar_enabled: false,
-  '   force_gpu_rasterization_enabled: true,
-  '   canvas_2d_acceleration_enabled: true,
-  '   javascript_enabled: true,
-  '   brightsign_js_objects_enabled: false,
-  '   transform: "identity",
-  '   hwz_default: "on"
-  ' }
-  ' htmlWidget = CreateObject("roHtmlWidget", rectangle, config)
   htmlWidget = CreateHtmlWidget("http://playr.biz/1160/84")
-  ' htmlWidget.SetPort(messagePort)
+  htmlWidget.SetPort(messagePort)
 
   ' sleep/wait 10 seconds
   sleep(10000)
@@ -40,7 +25,6 @@ End Sub
 
 Function CreateHtmlWidget(url$ as String) as Object
   print "CreateHtmlWidget start"
-  messagePort = CreateObject("roMessagePort")
   videoMode = CreateObject("roVideoMode")
   if type(videoMode) = "roVideoMode" then
     videoMode.setMode("auto")
@@ -84,20 +68,19 @@ Function CreateHtmlWidget(url$ as String) as Object
   ' enabled:(bool) Enables or disables the security feature.
   ' }
 
-  config = { url: "http://playr.biz/1160/84" }
+  ' config = { url: "http://playr.biz/1160/84" }
 
-
-  htmlWidget = CreateObject("roHtmlWidget", rect, config)
-  ' htmlWidget.SetUrl(url$)
-  ' htmlWidget.EnableSecurity(false)
-  ' htmlWidget.EnableJavascript(true)
-  ' htmlWidget.EnableCanvas2dAcceleration(true)
-  ' htmlWidget.ForceGpuRasterization(true)
+  ' htmlWidget = CreateObject("roHtmlWidget", rect, config)
+  htmlWidget = CreateObject("roHtmlWidget", rect)
+  htmlWidget.SetUrl(url$)
+  htmlWidget.EnableSecurity(false)
+  htmlWidget.EnableJavascript(true)
   ' ' htmlWidget.StartInspectorServer(2999)
-  ' htmlWidget.EnableMouseEvents(false)
-  ' htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  ' htmlWidget.SetHWZDefault("on")
-  ' htmlWidget.setPort(messagePort)
+  htmlWidget.EnableMouseEvents(false)
+  htmlWidget.AllowJavaScriptUrls({ all: "*" })
+  htmlWidget.SetHWZDefault("on")
+  htmlWidget.EnableCanvas2dAcceleration(true)
+  htmlWidget.ForceGpuRasterization(true)
 
   print "CreateHtmlWidget end"
   return htmlWidget

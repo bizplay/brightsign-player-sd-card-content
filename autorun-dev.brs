@@ -20,7 +20,6 @@ Sub Main(args)
   while true
     message = wait(0, globalAssociativeArray.messagePort)
     LogText("type(message) = " + type(message), "info")
-
     if type(message) = "roHtmlWidgetEvent" then
       eventData = message.GetData()
       if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
@@ -33,47 +32,6 @@ Sub Main(args)
   end while
 End Sub
 
-Function Initialise()
-  LogText("Initialise start", "info")
-  globalAssociativeArray = GetGlobalAA()
-
-  ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
-  ' EnableZoneSupport(1)
-  EnableZoneSupport(false)
-
-  ' for debuging/diagnostics; open log and serial port
-  InitialiseLog()
-  InitialiseSerialPort()
-
-  ' Enable mouse cursor
-  ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
-  ' globalAssociativeArray.touchScreen.EnableCursor(true)
-
-  globalAssociativeArray.messagePort = CreateObject("roMessagePort")
-
-  globalAssociativeArray.gpioPort = CreateObject("roGpioControlPort")
-  globalAssociativeArray.gpioPort.SetPort(globalAssociativeArray.messagePort)
-
-  globalAssociativeArray.videoMode = CreateObject("roVideoMode")
-  globalAssociativeArray.videoMode.setMode("auto")
-
-  ' set DWS on device
-  networkConfiguration = CreateNetworkConfiguration()
-  if type(networkConfiguration)= "roNetworkConfiguration" then
-    dwsAA = CreateObject("roAssociativeArray")
-    dwsAA["port"] = "80"
-    networkConfiguration.SetupDWS(dwsAA)
-    networkConfiguration.Apply()
-    LogText("Network configuration has been applied", "info")
-  else
-    LogText("Network configuration could not be created", "error")
-  endif
-
-  globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
-  globalAssociativeArray.networkHotPlug.setPort(globalAssociativeArray.messagePort)
-  LogText("Initialise end", "info")
-End Function
-
 Sub CreateHtmlWidget(url$ as String)
   LogText("CreateHtmlWidget start", "info")
   globalAssociativeArray = GetGlobalAA()
@@ -83,8 +41,6 @@ Sub CreateHtmlWidget(url$ as String)
 
   globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
   globalAssociativeArray.htmlWidget.EnableSecurity(false)
-  globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
-  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true)
   globalAssociativeArray.htmlWidget.SetUrl(url$)
   globalAssociativeArray.htmlWidget.EnableJavascript(true)
   ' use only for debugging
@@ -92,6 +48,8 @@ Sub CreateHtmlWidget(url$ as String)
   globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
   globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
   globalAssociativeArray.htmlWidget.SetHWZDefault("on")
+  globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
+  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true)
   globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
   ' globalAssociativeArray.htmlWidget.SetAppCacheDir()
   ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
@@ -105,7 +63,7 @@ End Sub
 Sub HandleEvents()
   LogText("HandleEvents start", "info")
   globalAssociativeArray = GetGlobalAA()
-  receivedIpAddr = (GetNetworkAddress() <> "")
+  receivedIpAddr = (GetIPAddress() <> "")
   receivedLoadFinished = false
 
   while true
@@ -176,7 +134,7 @@ Sub LogText(text$ as String, level$ as String)
   endif
 End Sub
 
-Sub CreateNetworkConfiguration()
+Function CreateNetworkConfiguration() as Object
   LogText("CreateNetworkConfiguration start", "info")
   networkConfiguration = CreateObject("roNetworkConfiguration", 0)
   if type(networkConfiguration) <> "roNetworkConfiguration" then
@@ -188,14 +146,15 @@ Sub CreateNetworkConfiguration()
 
   LogText("CreateNetworkConfiguration end", "info")
   return networkConfiguration
-End Sub
+End Function
 
-Sub GetIPAddress()
+Function GetIPAddress() as String
   LogText("GetIPAddress start", "info")
   ipAddr = ""
-  networkConfiguration = CreateNetworkConfiguration()
+  globalAssociativeArray = GetGlobalAA()
+  ' networkConfiguration = CreateNetworkConfiguration()
 
-  if type(networkConfiguration) = "roNetworkConfiguration" then
+  if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
     currentConfig = networkConfiguration.GetCurrentConfig()
     if currentConfig.ip4_address <> "" then
       ' We already have an IP addr
@@ -206,11 +165,53 @@ Sub GetIPAddress()
 
   LogText("GetIPAddress end", "info")
   return ipAddr
+End Function
+
+Sub Initialise()
+  LogText("Initialise start", "info")
+  globalAssociativeArray = GetGlobalAA()
+
+  ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
+  ' EnableZoneSupport(1)
+  EnableZoneSupport(false)
+
+  ' for debuging/diagnostics; open log and serial port
+  InitialiseLog()
+  ' InitialiseSerialPort()
+
+  ' Enable mouse cursor
+  ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
+  ' globalAssociativeArray.touchScreen.EnableCursor(true)
+
+  globalAssociativeArray.messagePort = CreateObject("roMessagePort")
+
+  globalAssociativeArray.gpioPort = CreateObject("roGpioControlPort")
+  globalAssociativeArray.gpioPort.SetPort(globalAssociativeArray.messagePort)
+
+  globalAssociativeArray.videoMode = CreateObject("roVideoMode")
+  globalAssociativeArray.videoMode.setMode("auto")
+
+  ' set DWS on device
+  ' globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
+'  InitialiseNetworkConfiguration()
+  ' if type(globalAssociativeArray.networkConfiguration)= "roNetworkConfiguration" then
+  '   dwsAA = CreateObject("roAssociativeArray")
+  '   dwsAA["port"] = "80"
+  '   globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
+  '   globalAssociativeArray.networkConfiguration.Apply()
+  '   LogText("Network configuration has been applied", "info")
+  ' else
+  '   LogText("Network configuration could not be created", "error")
+  ' endif
+
+  globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
+  globalAssociativeArray.networkHotPlug.setPort(globalAssociativeArray.messagePort)
+  LogText("Initialise end", "info")
 End Sub
 
 Sub InitialiseLog()
   LogText("InitialiseLog start", "info")
-  dateTime = CreateObject("roDateTime")
+  ' dateTime = CreateObject("roDateTime")
 
   ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
   ' fileName$ = "log-" + dateTime.getYear().ToStr() + dateTime.getMonth().ToStr() + dateTime.getDay().ToStr() + ".txt"
@@ -230,9 +231,27 @@ Sub InitialiseSerialPort()
 
   globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
   if type(globalAssociativeArray.serialPort) = "roSerialPort" then
-    messagePort = CreateObject("roMessagePort")
-    globalAssociativeArray.serialPort.SetLineEventPort(messagePort)
+    ' use the global message port
+    ' messagePort = CreateObject("roMessagePort")
+    globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
   else
     LogText("Serial port could not be created", "error")
   endif
+End Sub
+
+Sub InitialiseNetworkConfiguration()
+  LogText("InitialiseNetworkConfiguration start", "info")
+  globalAssociativeArray = GetGlobalAA()
+
+  globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
+  if type(globalAssociativeArray.networkConfiguration)= "roNetworkConfiguration" then
+    dwsAA = CreateObject("roAssociativeArray")
+    dwsAA["port"] = "80"
+    globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
+    globalAssociativeArray.networkConfiguration.Apply()
+    LogText("Network configuration has been applied", "info")
+  else
+    LogText("Network configuration could not be created", "error")
+  endif
+  LogText("InitialiseNetworkConfiguration end", "info")
 End Sub
