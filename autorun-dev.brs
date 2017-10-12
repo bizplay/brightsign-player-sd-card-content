@@ -61,6 +61,7 @@ Sub HandleEvents()
       endif
     else if type(event) = "roGpioButton" then
       if event.GetInt() = 12 then
+        LogText("HandleEvents: roGpioButton with value 12 => Stopping", "info")
         stop
       else
         LogText("HandleEvents: roGpioButton with value other than 12", "info")
@@ -149,6 +150,9 @@ Sub Initialise(url$ as String)
   ' for debuging/diagnostics; open log and serial port
   InitialiseLog()
   LogText("*******************************************************************", "info")
+  dateTime = CreateObject("roDateTime")
+  LogText("****************  " + dateTime.GetString() + "  ****************", "info")
+  LogText("*******************************************************************", "info")
   InitialiseSerialPort()
   ' Enable mouse cursor
   ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
@@ -209,9 +213,12 @@ EndSub
 Sub InitialiseLog()
   LogText("InitialiseLog start", "info")
   dateTime = CreateObject("roDateTime")
+  ' if dateTime.GetYear() = 0 then
+  '   dateTime = m.systemTime.GetLocalDateTime()
+  ' endif
 
   ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
-  fileName$ = "log-" + dateTime.GetYear().ToStr() + dateTime.GetMonth().ToStr() + dateTime.GetDayOfMonth().ToStr() + ".txt"
+  fileName$ = "log-" + dateTime.GetYear().ToStr() + dateTime.GetMonth().ToStr() + dateTime.GetDay().ToStr() + ".txt"
   ' fileName$ = "log.txt"
   m.logFile = CreateObject("roAppendFile", fileName$)
   if type(m.logFile) = "roAppendFile" then
