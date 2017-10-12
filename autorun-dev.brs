@@ -9,10 +9,9 @@ Sub Main(args as Dynamic)
   Initialise(url$)
 
   ' sleep/wait 10 seconds
-  sleep(10000)
-  globalAssociativeArray = GetGlobalAA()
-
-  globalAssociativeArray.htmlWidget.Show()
+  ' sleep(10000)
+  ' globalAssociativeArray = GetGlobalAA()
+  ' globalAssociativeArray.htmlWidget.Show()
 
   HandleEvents()
   ' while true
@@ -39,7 +38,7 @@ Sub HandleEvents()
   while true
     ' establish receivedIpAddr and receivedLoadFinished
     event = wait(0, globalAssociativeArray.messagePort)
-    LogText("HandleEvents: Received event " + type(event), "info")
+    LogText("HandleEvents: Received event: " + type(event), "info")
     if type(event) = "roNetworkAttached" then
       LogText("HandleEvents: Received roNetworkAttached", "info")
       receivedIpAddr = true
@@ -76,6 +75,17 @@ Sub HandleEvents()
       globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
       receivedIpAddr = false
       receivedLoadFinished = false
+    else
+      if receivedIpAddr then
+        LogText("HandleEvents: receivedIpAddr: true", "info")
+      else
+        LogText("HandleEvents: receivedIpAddr: false", "warning")
+      endif
+      if receivedLoadFinished then
+        LogText("HandleEvents: receivedLoadFinished: true", "info")
+      else
+        LogText("HandleEvents: receivedLoadFinished: false", "warning")
+      endif
     endif
   endwhile
 EndSub
@@ -154,8 +164,9 @@ Sub Initialise(url$ as String)
   ' for debuging/diagnostics; open log and serial port
   InitialiseLog()
   LogText("*******************************************************************", "info")
-  dateTime = CreateObject("roDateTime")
-  LogText("****************  " + dateTime.GetString() + "  ****************", "info")
+  systemTime = CreateObject("roSystemTime")
+  dateTime = systemTime.GetLocalDateTime()
+  LogText("****************      " + dateTime.GetString() + "      ****************", "info")
   LogText("*******************************************************************", "info")
   InitialiseSerialPort()
   ' Enable mouse cursor
