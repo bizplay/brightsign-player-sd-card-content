@@ -1,32 +1,13 @@
 Sub Main(args as Dynamic)
   print "autorun.brs started"
-  url$ = "http://playr.biz/1160/84"
 
+  url$ = "http://playr.biz/1160/84"
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
 
   Initialise(url$)
-
-  ' sleep/wait 10 seconds
-  ' sleep(10000)
-  ' globalAssociativeArray = GetGlobalAA()
-  ' globalAssociativeArray.htmlWidget.Show()
-
   HandleEvents()
-  ' while true
-  '   message = wait(0, globalAssociativeArray.messagePort)
-  '   LogText("type(message) = " + type(message), "info")
-  '   if type(message) = "roHtmlWidgetEvent" then
-  '     eventData = message.GetData()
-  '     if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
-  '       LogText("reason = " + eventData.reason, "info")
-  '       if eventData.reason = "load-error" then
-  '         LogText("message = " + eventData.message, "error")
-  '       endif
-  '     endif
-  '   endif
-  ' endwhile
 EndSub
 
 Sub HandleEvents()
@@ -47,11 +28,13 @@ Sub HandleEvents()
       if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
         if eventData.reason = "load-error" then
           LogText("HandleEvents: HTML load error: " + eventData.message, "error")
+        else if eventData.reason = "load-started" then
+          LogText("HandleEvents: Received load started", "info")
         else if eventData.reason = "load-finished" then
           LogText("HandleEvents: Received load finished", "info")
           receivedLoadFinished = true
         else if eventData.reason = "message" then
-          LogText(eventData.message.text, "info")
+          LogText("HandleEvents: Received message: " + eventData.message.text, "info")
         else
           LogText("HandleEvents: Unknown eventData.reason: " + eventData.reason, "warning")
         endif
@@ -96,11 +79,11 @@ Sub LogText(text$ as String, level$ as String)
   if level$ = "info" then
     filler$ = ""
   else if level$ = "warning" then
-    filler$ = "===> "
+    filler$ = "=> "
   else if level$ = "error" then
-    filler$ = "!!!! "
+    filler$ = "!!! "
   else if level$ = "fatal" then
-    filler$ = "<<!!!!>> "
+    filler$ = "<<!!!>> "
   else
     filler$ = ""
   endif
@@ -134,7 +117,6 @@ Function GetIPAddress() as String
   LogText("GetIPAddress start", "info")
   ipAddr = ""
   globalAssociativeArray = GetGlobalAA()
-  ' networkConfiguration = CreateNetworkConfiguration()
 
   if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
     currentConfig = globalAssociativeArray.networkConfiguration.GetCurrentConfig()
@@ -210,7 +192,7 @@ Sub InitialiseHtmlWidget(url$ as String)
   globalAssociativeArray.htmlWidget.EnableJavascript(true)
   globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
   ' use only for debugging
-  ' globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
+  globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
   globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
   globalAssociativeArray.htmlWidget.SetHWZDefault("on")
   globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
@@ -227,14 +209,11 @@ EndSub
 
 Sub InitialiseLog()
   LogText("InitialiseLog start", "info")
-  dateTime = CreateObject("roDateTime")
-  ' if dateTime.GetYear() = 0 then
-  '   dateTime = m.systemTime.GetLocalDateTime()
-  ' endif
+  systemTime = CreateObject("roSystemTime")
+  dateTime = systemTime.GetLocalDateTime()
 
   ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
   fileName$ = "log-" + dateTime.GetYear().ToStr() + dateTime.GetMonth().ToStr() + dateTime.GetDay().ToStr() + ".txt"
-  ' fileName$ = "log.txt"
   m.logFile = CreateObject("roAppendFile", fileName$)
   if type(m.logFile) = "roAppendFile" then
     return
