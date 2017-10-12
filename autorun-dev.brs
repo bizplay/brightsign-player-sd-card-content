@@ -14,20 +14,20 @@ Sub Main(args as Dynamic)
 
   globalAssociativeArray.htmlWidget.Show()
 
-  ' HandleEvents()
-  while true
-    message = wait(0, globalAssociativeArray.messagePort)
-    LogText("type(message) = " + type(message), "info")
-    if type(message) = "roHtmlWidgetEvent" then
-      eventData = message.GetData()
-      if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
-        LogText("reason = " + eventData.reason, "info")
-        if eventData.reason = "load-error" then
-          LogText("message = " + eventData.message, "error")
-        endif
-      endif
-    endif
-  endwhile
+  HandleEvents()
+  ' while true
+  '   message = wait(0, globalAssociativeArray.messagePort)
+  '   LogText("type(message) = " + type(message), "info")
+  '   if type(message) = "roHtmlWidgetEvent" then
+  '     eventData = message.GetData()
+  '     if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
+  '       LogText("reason = " + eventData.reason, "info")
+  '       if eventData.reason = "load-error" then
+  '         LogText("message = " + eventData.message, "error")
+  '       endif
+  '     endif
+  '   endif
+  ' endwhile
 EndSub
 
 Sub HandleEvents()
@@ -211,7 +211,7 @@ Sub InitialiseLog()
   dateTime = CreateObject("roDateTime")
 
   ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
-  fileName$ = "log-" + dateTime.getYear().ToStr() + dateTime.getMonth().ToStr() + dateTime.getDay().ToStr() + ".txt"
+  fileName$ = "log-" + dateTime.GetYear().ToStr() + dateTime.GetMonth().ToStr() + dateTime.GetDayOfMonth().ToStr() + ".txt"
   ' fileName$ = "log.txt"
   m.logFile = CreateObject("roAppendFile", fileName$)
   if type(m.logFile) = "roAppendFile" then
