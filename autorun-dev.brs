@@ -1,25 +1,20 @@
-Sub Main(args)
+Sub Main(args as Dynamic)
   print "autorun.brs started"
-  tmpFile = CreateObject("roCreateFile", "main0.txt")
   url$ = "http://playr.biz/1160/84"
 
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
 
-  tmpFile = CreateObject("roCreateFile", "main1.txt")
   Initialise(url$)
-  tmpFile = CreateObject("roCreateFile", "main2.txt")
   LogText("url = " + url$, "info")
   ' CreateHtmlWidget(url$)
 
   ' sleep/wait 10 seconds
   sleep(10000)
-  tmpFile = CreateObject("roCreateFile", "main3.txt")
   globalAssociativeArray = GetGlobalAA()
 
   globalAssociativeArray.htmlWidget.Show()
-  tmpFile = CreateObject("roCreateFile", "main4.txt")
 
   ' HandleEvents()
   while true
@@ -34,57 +29,57 @@ Sub Main(args)
         endif
       endif
     endif
-  end while
-EndSub
-
-Sub HandleEvents()
-  LogText("HandleEvents start", "info")
-  globalAssociativeArray = GetGlobalAA()
-  receivedIpAddr = (GetIPAddress() <> "")
-  receivedLoadFinished = false
-
-  while true
-    ' establish receivedIpAddr and receivedLoadFinished
-    event = wait(0, globalAssociativeArray.messagePort)
-    LogText("Received event " + type(event), "info")
-    if type(event) = "roNetworkAttached" then
-      LogText("Received roNetworkAttached", "info")
-      receivedIpAddr = true
-    else if type(event) = "roHtmlWidgetEvent" then
-      eventData = event.GetData()
-      if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
-        if eventData.reason = "load-error" then
-          LogText("HTML load error: " + eventData.message, "error")
-        else if eventData.reason = "load-finished" then
-          LogText("Received load finished", "info")
-          receivedLoadFinished = true
-        else if eventData.reason = "message" then
-          LogText(eventData.message.text, "info")
-        else
-          LogText("Unknown eventData.reason: " + eventData.reason, "warning")
-        endif
-      else
-        LogText("Unknown eventData: " + type(eventData), "warning")
-      endif
-    else if type(event) = "roGpioButton" then
-      if event.GetInt() = 12 then
-        stop
-      else
-        LogText("roGpioButton with value other than 12", "info")
-      endif
-    else
-      LogText("Unhandled event: " + type(event), "warning")
-    endif
-
-    if receivedIpAddr and receivedLoadFinished then
-      LogText("Show HTML widget", "info")
-      globalAssociativeArray.htmlWidget.Show()
-      globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
-      receivedIpAddr = false
-      receivedLoadFinished = false
-    endif
   endwhile
 EndSub
+
+' Sub HandleEvents()
+'   LogText("HandleEvents start", "info")
+'   globalAssociativeArray = GetGlobalAA()
+'   receivedIpAddr = (GetIPAddress() <> "")
+'   receivedLoadFinished = false
+
+'   while true
+'     ' establish receivedIpAddr and receivedLoadFinished
+'     event = wait(0, globalAssociativeArray.messagePort)
+'     LogText("Received event " + type(event), "info")
+'     if type(event) = "roNetworkAttached" then
+'       LogText("Received roNetworkAttached", "info")
+'       receivedIpAddr = true
+'     else if type(event) = "roHtmlWidgetEvent" then
+'       eventData = event.GetData()
+'       if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
+'         if eventData.reason = "load-error" then
+'           LogText("HTML load error: " + eventData.message, "error")
+'         else if eventData.reason = "load-finished" then
+'           LogText("Received load finished", "info")
+'           receivedLoadFinished = true
+'         else if eventData.reason = "message" then
+'           LogText(eventData.message.text, "info")
+'         else
+'           LogText("Unknown eventData.reason: " + eventData.reason, "warning")
+'         endif
+'       else
+'         LogText("Unknown eventData: " + type(eventData), "warning")
+'       endif
+'     else if type(event) = "roGpioButton" then
+'       if event.GetInt() = 12 then
+'         stop
+'       else
+'         LogText("roGpioButton with value other than 12", "info")
+'       endif
+'     else
+'       LogText("Unhandled event: " + type(event), "warning")
+'     endif
+
+'     if receivedIpAddr and receivedLoadFinished then
+'       LogText("Show HTML widget", "info")
+'       globalAssociativeArray.htmlWidget.Show()
+'       globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
+'       receivedIpAddr = false
+'       receivedLoadFinished = false
+'     endif
+'   endwhile
+' EndSub
 
 Sub LogText(text$ as String, level$ as String)
   globalAssociativeArray = GetGlobalAA()
@@ -106,44 +101,44 @@ Sub LogText(text$ as String, level$ as String)
     ' To use this: msgPort.PostBSMessage({text: "my message"});
     m.logFile.SendLine(filler$ + text$)
     m.logFile.AsyncFlush()
-  end
+  endif
   if type(globalAssociativeArray.serialPort) = "roSerialPort" then
     globalAssociativeArray.serialPort.SendLine(filler$ + text$)
   endif
 EndSub
 
-Function CreateNetworkConfiguration() as Object
-  LogText("CreateNetworkConfiguration start", "info")
-  networkConfiguration = CreateObject("roNetworkConfiguration", 0)
-  if type(networkConfiguration) <> "roNetworkConfiguration" then
-    networkConfiguration = CreateObject("roNetworkConfiguration", 1)
-    if type(networkConfiguration) <> "roNetworkConfiguration" then
-      LogText("Network configuration could not be created", "error")
-    endif
-  endif
+' Function CreateNetworkConfiguration() as Object
+'   LogText("CreateNetworkConfiguration start", "info")
+'   networkConfiguration = CreateObject("roNetworkConfiguration", 0)
+'   if type(networkConfiguration) <> "roNetworkConfiguration" then
+'     networkConfiguration = CreateObject("roNetworkConfiguration", 1)
+'     if type(networkConfiguration) <> "roNetworkConfiguration" then
+'       LogText("Network configuration could not be created", "error")
+'     endif
+'   endif
 
-  LogText("CreateNetworkConfiguration end", "info")
-  return networkConfiguration
-EndFunction
+'   LogText("CreateNetworkConfiguration end", "info")
+'   return networkConfiguration
+' EndFunction
 
-Function GetIPAddress() as String
-  LogText("GetIPAddress start", "info")
-  ipAddr = ""
-  globalAssociativeArray = GetGlobalAA()
-  ' networkConfiguration = CreateNetworkConfiguration()
+' Function GetIPAddress() as String
+'   LogText("GetIPAddress start", "info")
+'   ipAddr = ""
+'   globalAssociativeArray = GetGlobalAA()
+'   ' networkConfiguration = CreateNetworkConfiguration()
 
-  if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
-    currentConfig = networkConfiguration.GetCurrentConfig()
-    if currentConfig.ip4_address <> "" then
-      ' We already have an IP addr
-      ipAddr = currentConfig.ip4_address
-      LogText("Assigned IP address: " + ipAddr, "info")
-    endif
-  endif
+'   if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
+'     currentConfig = networkConfiguration.GetCurrentConfig()
+'     if currentConfig.ip4_address <> "" then
+'       ' We already have an IP addr
+'       ipAddr = currentConfig.ip4_address
+'       LogText("Assigned IP address: " + ipAddr, "info")
+'     endif
+'   endif
 
-  LogText("GetIPAddress end", "info")
-  return ipAddr
-EndFunction
+'   LogText("GetIPAddress end", "info")
+'   return ipAddr
+' EndFunction
 
 Sub Initialise(url$ as String)
   LogText("Initialise start", "info")
@@ -151,7 +146,7 @@ Sub Initialise(url$ as String)
 
   ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
   ' EnableZoneSupport(1)
-  ' EnableZoneSupport(false)
+  EnableZoneSupport(false)
 
   ' for debuging/diagnostics; open log and serial port
   InitialiseLog()
@@ -172,7 +167,7 @@ Sub Initialise(url$ as String)
 
   ' set DWS on device
   ' globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
-'  InitialiseNetworkConfiguration()
+  InitialiseNetworkConfiguration()
   ' if type(globalAssociativeArray.networkConfiguration)= "roNetworkConfiguration" then
   '   dwsAA = CreateObject("roAssociativeArray")
   '   dwsAA["port"] = "80"
@@ -190,6 +185,7 @@ EndSub
 
 Sub InitialiseHtmlWidget(url$ as String)
   LogText("InitialiseHtmlWidget start", "info")
+  LogText("InitialiseHtmlWidget: " + url$, "info")
   globalAssociativeArray = GetGlobalAA()
   if type(globalAssociativeArray.videoMode) = "roVideoMode"
     width = globalAssociativeArray.videoMode.GetResX()
@@ -237,19 +233,20 @@ Sub InitialiseLog()
   LogText("InitialiseLog end", "info")
 EndSub
 
-Sub InitialiseSerialPort()
-  LogText("InitialiseSerialPort start", "info")
-  globalAssociativeArray = GetGlobalAA()
+' Sub InitialiseSerialPort()
+'   LogText("InitialiseSerialPort start", "info")
+'   globalAssociativeArray = GetGlobalAA()
 
-  globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
-  if type(globalAssociativeArray.serialPort) = "roSerialPort" then
-    ' use the global message port
-    ' messagePort = CreateObject("roMessagePort")
-    globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
-  else
-    LogText("Serial port could not be created", "error")
-  endif
-EndSub
+'   globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
+'   if type(globalAssociativeArray.serialPort) = "roSerialPort" then
+'     ' use the global message port
+'     ' messagePort = CreateObject("roMessagePort")
+'     globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
+'   else
+'     LogText("Serial port could not be created", "error")
+'   endif
+'   LogText("InitialiseSerialPort end", "info")
+' EndSub
 
 Sub InitialiseNetworkConfiguration()
   LogText("InitialiseNetworkConfiguration start", "info")
@@ -257,13 +254,14 @@ Sub InitialiseNetworkConfiguration()
 
   globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
   if type(globalAssociativeArray.networkConfiguration)= "roNetworkConfiguration" then
+    LogText("InitialiseNetworkConfiguration: network configuration created", "info")
     dwsAA = CreateObject("roAssociativeArray")
     dwsAA["port"] = "80"
     globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
     globalAssociativeArray.networkConfiguration.Apply()
-    LogText("Network configuration has been applied", "info")
+    LogText("InitialiseNetworkConfiguration: network configuration has been applied", "info")
   else
-    LogText("Network configuration could not be created", "error")
+    LogText("InitialiseNetworkConfiguration: network configuration could not be created", "error")
   endif
   LogText("InitialiseNetworkConfiguration end", "info")
 EndSub
