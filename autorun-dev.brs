@@ -7,8 +7,6 @@ Sub Main(args as Dynamic)
   endif
 
   Initialise(url$)
-  LogText("url = " + url$, "info")
-  ' CreateHtmlWidget(url$)
 
   ' sleep/wait 10 seconds
   sleep(10000)
@@ -32,54 +30,54 @@ Sub Main(args as Dynamic)
   endwhile
 EndSub
 
-' Sub HandleEvents()
-'   LogText("HandleEvents start", "info")
-'   globalAssociativeArray = GetGlobalAA()
-'   receivedIpAddr = (GetIPAddress() <> "")
-'   receivedLoadFinished = false
+Sub HandleEvents()
+  LogText("HandleEvents start", "info")
+  globalAssociativeArray = GetGlobalAA()
+  receivedIpAddr = (GetIPAddress() <> "")
+  receivedLoadFinished = false
 
-'   while true
-'     ' establish receivedIpAddr and receivedLoadFinished
-'     event = wait(0, globalAssociativeArray.messagePort)
-'     LogText("Received event " + type(event), "info")
-'     if type(event) = "roNetworkAttached" then
-'       LogText("Received roNetworkAttached", "info")
-'       receivedIpAddr = true
-'     else if type(event) = "roHtmlWidgetEvent" then
-'       eventData = event.GetData()
-'       if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
-'         if eventData.reason = "load-error" then
-'           LogText("HTML load error: " + eventData.message, "error")
-'         else if eventData.reason = "load-finished" then
-'           LogText("Received load finished", "info")
-'           receivedLoadFinished = true
-'         else if eventData.reason = "message" then
-'           LogText(eventData.message.text, "info")
-'         else
-'           LogText("Unknown eventData.reason: " + eventData.reason, "warning")
-'         endif
-'       else
-'         LogText("Unknown eventData: " + type(eventData), "warning")
-'       endif
-'     else if type(event) = "roGpioButton" then
-'       if event.GetInt() = 12 then
-'         stop
-'       else
-'         LogText("roGpioButton with value other than 12", "info")
-'       endif
-'     else
-'       LogText("Unhandled event: " + type(event), "warning")
-'     endif
+  while true
+    ' establish receivedIpAddr and receivedLoadFinished
+    event = wait(0, globalAssociativeArray.messagePort)
+    LogText("HandleEvents: Received event " + type(event), "info")
+    if type(event) = "roNetworkAttached" then
+      LogText("HandleEvents: Received roNetworkAttached", "info")
+      receivedIpAddr = true
+    else if type(event) = "roHtmlWidgetEvent" then
+      eventData = event.GetData()
+      if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
+        if eventData.reason = "load-error" then
+          LogText("HandleEvents: HTML load error: " + eventData.message, "error")
+        else if eventData.reason = "load-finished" then
+          LogText("HandleEvents: Received load finished", "info")
+          receivedLoadFinished = true
+        else if eventData.reason = "message" then
+          LogText(eventData.message.text, "info")
+        else
+          LogText("HandleEvents: Unknown eventData.reason: " + eventData.reason, "warning")
+        endif
+      else
+        LogText("HandleEvents: Unknown eventData: " + type(eventData), "warning")
+      endif
+    else if type(event) = "roGpioButton" then
+      if event.GetInt() = 12 then
+        stop
+      else
+        LogText("HandleEvents: roGpioButton with value other than 12", "info")
+      endif
+    else
+      LogText("HandleEvents: Unhandled event: " + type(event), "warning")
+    endif
 
-'     if receivedIpAddr and receivedLoadFinished then
-'       LogText("Show HTML widget", "info")
-'       globalAssociativeArray.htmlWidget.Show()
-'       globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
-'       receivedIpAddr = false
-'       receivedLoadFinished = false
-'     endif
-'   endwhile
-' EndSub
+    if receivedIpAddr and receivedLoadFinished then
+      LogText("HandleEvents: Show HTML widget", "info")
+      globalAssociativeArray.htmlWidget.Show()
+      globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
+      receivedIpAddr = false
+      receivedLoadFinished = false
+    endif
+  endwhile
+EndSub
 
 Sub LogText(text$ as String, level$ as String)
   globalAssociativeArray = GetGlobalAA()
@@ -121,24 +119,24 @@ Function CreateNetworkConfiguration() as Object
   return networkConfiguration
 EndFunction
 
-' Function GetIPAddress() as String
-'   LogText("GetIPAddress start", "info")
-'   ipAddr = ""
-'   globalAssociativeArray = GetGlobalAA()
-'   ' networkConfiguration = CreateNetworkConfiguration()
+Function GetIPAddress() as String
+  LogText("GetIPAddress start", "info")
+  ipAddr = ""
+  globalAssociativeArray = GetGlobalAA()
+  ' networkConfiguration = CreateNetworkConfiguration()
 
-'   if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
-'     currentConfig = networkConfiguration.GetCurrentConfig()
-'     if currentConfig.ip4_address <> "" then
-'       ' We already have an IP addr
-'       ipAddr = currentConfig.ip4_address
-'       LogText("Assigned IP address: " + ipAddr, "info")
-'     endif
-'   endif
+  if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
+    currentConfig = networkConfiguration.GetCurrentConfig()
+    if currentConfig.ip4_address <> "" then
+      ' We already have an IP addr
+      ipAddr = currentConfig.ip4_address
+      LogText("Assigned IP address: " + ipAddr, "info")
+    endif
+  endif
 
-'   LogText("GetIPAddress end", "info")
-'   return ipAddr
-' EndFunction
+  LogText("GetIPAddress end", "info")
+  return ipAddr
+EndFunction
 
 Sub Initialise(url$ as String)
   LogText("Initialise start", "info")
@@ -151,7 +149,7 @@ Sub Initialise(url$ as String)
   ' for debuging/diagnostics; open log and serial port
   InitialiseLog()
   LogText("*******************************************************************", "info")
-  ' InitialiseSerialPort()
+  InitialiseSerialPort()
   ' Enable mouse cursor
   ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
   ' globalAssociativeArray.touchScreen.EnableCursor(true)
@@ -167,17 +165,7 @@ Sub Initialise(url$ as String)
   InitialiseHtmlWidget(url$)
 
   ' set DWS on device
-  ' globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
   InitialiseNetworkConfiguration()
-  ' if type(globalAssociativeArray.networkConfiguration)= "roNetworkConfiguration" then
-  '   dwsAA = CreateObject("roAssociativeArray")
-  '   dwsAA["port"] = "80"
-  '   globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
-  '   globalAssociativeArray.networkConfiguration.Apply()
-  '   LogText("Network configuration has been applied", "info")
-  ' else
-  '   LogText("Network configuration could not be created", "error")
-  ' endif
 
   globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
   globalAssociativeArray.networkHotPlug.setPort(globalAssociativeArray.messagePort)
@@ -186,7 +174,7 @@ EndSub
 
 Sub InitialiseHtmlWidget(url$ as String)
   LogText("InitialiseHtmlWidget start", "info")
-  LogText("InitialiseHtmlWidget: " + url$, "info")
+  LogText("InitialiseHtmlWidget: url = " + url$, "info")
   globalAssociativeArray = GetGlobalAA()
   if type(globalAssociativeArray.videoMode) = "roVideoMode"
     width = globalAssociativeArray.videoMode.GetResX()
@@ -220,11 +208,11 @@ EndSub
 
 Sub InitialiseLog()
   LogText("InitialiseLog start", "info")
-  ' dateTime = CreateObject("roDateTime")
+  dateTime = CreateObject("roDateTime")
 
   ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
-  ' fileName$ = "log-" + dateTime.getYear().ToStr() + dateTime.getMonth().ToStr() + dateTime.getDay().ToStr() + ".txt"
-  fileName$ = "log.txt"
+  fileName$ = "log-" + dateTime.getYear().ToStr() + dateTime.getMonth().ToStr() + dateTime.getDay().ToStr() + ".txt"
+  ' fileName$ = "log.txt"
   m.logFile = CreateObject("roAppendFile", fileName$)
   if type(m.logFile) = "roAppendFile" then
     return
