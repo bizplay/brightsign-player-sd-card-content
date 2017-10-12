@@ -107,19 +107,19 @@ Sub LogText(text$ as String, level$ as String)
   endif
 EndSub
 
-' Function CreateNetworkConfiguration() as Object
-'   LogText("CreateNetworkConfiguration start", "info")
-'   networkConfiguration = CreateObject("roNetworkConfiguration", 0)
-'   if type(networkConfiguration) <> "roNetworkConfiguration" then
-'     networkConfiguration = CreateObject("roNetworkConfiguration", 1)
-'     if type(networkConfiguration) <> "roNetworkConfiguration" then
-'       LogText("Network configuration could not be created", "error")
-'     endif
-'   endif
+Function CreateNetworkConfiguration() as Object
+  LogText("CreateNetworkConfiguration start", "info")
+  networkConfiguration = CreateObject("roNetworkConfiguration", 0)
+  if type(networkConfiguration) <> "roNetworkConfiguration" then
+    networkConfiguration = CreateObject("roNetworkConfiguration", 1)
+    if type(networkConfiguration) <> "roNetworkConfiguration" then
+      LogText("Network configuration could not be created", "error")
+    endif
+  endif
 
-'   LogText("CreateNetworkConfiguration end", "info")
-'   return networkConfiguration
-' EndFunction
+  LogText("CreateNetworkConfiguration end", "info")
+  return networkConfiguration
+EndFunction
 
 ' Function GetIPAddress() as String
 '   LogText("GetIPAddress start", "info")
@@ -258,8 +258,8 @@ Sub InitialiseNetworkConfiguration()
     LogText("InitialiseNetworkConfiguration: network configuration created", "info")
     dwsAA = CreateObject("roAssociativeArray")
     dwsAA["port"] = "80"
-    ' globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
-    ' globalAssociativeArray.networkConfiguration.Apply()
+    globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
+    globalAssociativeArray.networkConfiguration.Apply()
     LogText("InitialiseNetworkConfiguration: network configuration has been applied", "info")
   else
     LogText("InitialiseNetworkConfiguration: network configuration could not be created", "error")
