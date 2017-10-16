@@ -1,7 +1,7 @@
 Sub Main(args as Dynamic)
   print "autorun.brs started"
 
-  url$ = "http://playr.biz/1160/84"
+  url$ = "http://play.playr.biz"
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
@@ -202,8 +202,8 @@ Sub InitialiseHtmlWidget(url$ as String)
   ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
   ' globalAssociativeArray.htmlWidget.SetLocalStorageDir()
   ' globalAssociativeArray.htmlWidget.SetLocalStorageQuota()
-  ' globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
-  ' globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
+  globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
+  globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
   LogText("InitialiseHtmlWidget end", "info")
 EndSub
 
