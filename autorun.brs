@@ -1,87 +1,257 @@
-Sub Main()
-  messagePort = CreateObject("roMessagePort")
-  htmlWidget = CreateHtmlWidget("http://playr.biz/1160/84")
-  htmlWidget.SetPort(messagePort)
+Sub Main(args as Dynamic)
+  print "autorun.brs started"
 
-  ' sleep/wait 10 seconds
-  sleep(10000)
+  url$ = "http://play.playr.biz"
+  if args <> invalid and args.Count() > 0 then
+    url$ = args[0]
+  endif
 
-  htmlWidget.Show()
+  Initialise(url$)
+  HandleEvents()
+EndSub
+
+Sub HandleEvents()
+  LogText("HandleEvents start", "info")
+  globalAssociativeArray = GetGlobalAA()
+  receivedIpAddr = (GetIPAddress() <> "")
+  receivedLoadFinished = false
+
   while true
-    message = wait(0, messagePort)
-    print "type(message) = ";type(message)
-
-    if type(message) = "roHtmlWidgetEvent" then
-      eventData = message.GetData()
+    ' establish receivedIpAddr and receivedLoadFinished
+    event = wait(0, globalAssociativeArray.messagePort)
+    LogText("HandleEvents: Received event: " + type(event), "info")
+    if type(event) = "roNetworkAttached" then
+      LogText("HandleEvents: Received roNetworkAttached", "info")
+      receivedIpAddr = true
+    else if type(event) = "roHtmlWidgetEvent" then
+      eventData = event.GetData()
       if type(eventData) = "roAssociativeArray" and type(eventData.reason) = "roString" then
-        print "reason = ";eventData.reason
         if eventData.reason = "load-error" then
-          print "message = ";eventData.message
+          LogText("HandleEvents: HTML load error: " + eventData.message, "error")
+        else if eventData.reason = "load-started" then
+          LogText("HandleEvents: Received load started", "info")
+        else if eventData.reason = "load-finished" then
+          LogText("HandleEvents: Received load finished", "info")
+          receivedLoadFinished = true
+        else if eventData.reason = "message" then
+          LogText("HandleEvents: Received message: " + eventData.message.text, "info")
+        else
+          LogText("HandleEvents: Unknown eventData.reason: " + eventData.reason, "warning")
         endif
+      else
+        LogText("HandleEvents: Unknown eventData: " + type(eventData), "warning")
+      endif
+    else if type(event) = "roGpioButton" then
+      if event.GetInt() = 12 then
+        LogText("HandleEvents: roGpioButton with value 12 => Stopping", "info")
+        stop
+      else
+        LogText("HandleEvents: roGpioButton with value other than 12", "info")
+      endif
+    else
+      LogText("HandleEvents: Unhandled event: " + type(event), "warning")
+    endif
+
+    if receivedIpAddr and receivedLoadFinished then
+      LogText("HandleEvents: Show HTML widget", "info")
+      globalAssociativeArray.htmlWidget.Show()
+      globalAssociativeArray.htmlWidget.PostJSMessage({msgtype:"htmlloaded"})
+      receivedIpAddr = false
+      receivedLoadFinished = false
+    else
+      if receivedIpAddr then
+        LogText("HandleEvents: receivedIpAddr: true", "info")
+      else
+        LogText("HandleEvents: receivedIpAddr: false", "warning")
+      endif
+      if receivedLoadFinished then
+        LogText("HandleEvents: receivedLoadFinished: true", "info")
+      else
+        LogText("HandleEvents: receivedLoadFinished: false", "warning")
       endif
     endif
-  end while
-End Sub
+  endwhile
+EndSub
 
-Function CreateHtmlWidget(url$ as String) as Object
-  print "CreateHtmlWidget start"
-  videoMode = CreateObject("roVideoMode")
-  if type(videoMode) = "roVideoMode" then
-    videoMode.setMode("auto")
-    width = videoMode.GetResX()
-    height = videoMode.GetResY()
+Sub LogText(text$ as String, level$ as String)
+  globalAssociativeArray = GetGlobalAA()
+  filler$ = ""
+  if level$ = "info" then
+    filler$ = ""
+  else if level$ = "warning" then
+    filler$ = "=> "
+  else if level$ = "error" then
+    filler$ = "!!! "
+  else if level$ = "fatal" then
+    filler$ = "<<!!!>> "
+  else
+    filler$ = ""
+  endif
+
+  print filler$;text$
+  if type(m.logFile) = "roAppendFile" then
+    ' To use this: msgPort.PostBSMessage({text: "my message"});
+    m.logFile.SendLine(filler$ + text$)
+    m.logFile.AsyncFlush()
+  endif
+  if type(globalAssociativeArray.serialPort) = "roSerialPort" then
+    globalAssociativeArray.serialPort.SendLine(filler$ + text$)
+  endif
+EndSub
+
+Function CreateNetworkConfiguration() as Object
+  LogText("CreateNetworkConfiguration start", "info")
+  networkConfiguration = CreateObject("roNetworkConfiguration", 0)
+  if type(networkConfiguration) <> "roNetworkConfiguration" then
+    networkConfiguration = CreateObject("roNetworkConfiguration", 1)
+    if type(networkConfiguration) <> "roNetworkConfiguration" then
+      LogText("Network configuration could not be created", "error")
+    endif
+  endif
+
+  LogText("CreateNetworkConfiguration end", "info")
+  return networkConfiguration
+EndFunction
+
+Function GetIPAddress() as String
+  LogText("GetIPAddress start", "info")
+  ipAddr = ""
+  globalAssociativeArray = GetGlobalAA()
+
+  if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
+    currentConfig = globalAssociativeArray.networkConfiguration.GetCurrentConfig()
+    if currentConfig.ip4_address <> "" then
+      ' We already have an IP addr
+      ipAddr = currentConfig.ip4_address
+      LogText("GetIPAddress: Assigned IP address: " + ipAddr, "info")
+    else
+      LogText("GetIPAddress: no IP address found", "info")
+    endif
+  else
+    LogText("GetIPAddress: no networkConfiguration found", "error")
+  endif
+
+  LogText("GetIPAddress end", "info")
+  return ipAddr
+EndFunction
+
+Sub Initialise(url$ as String)
+  LogText("Initialise start", "info")
+  globalAssociativeArray = GetGlobalAA()
+
+  ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
+  ' EnableZoneSupport(1)
+  EnableZoneSupport(false)
+
+  ' for debuging/diagnostics; open log and serial port
+  InitialiseLog()
+  LogText("*******************************************************************", "info")
+  systemTime = CreateObject("roSystemTime")
+  dateTime = systemTime.GetLocalDateTime()
+  LogText("****************      " + dateTime.GetString() + "      ****************", "info")
+  LogText("*******************************************************************", "info")
+  InitialiseSerialPort()
+  ' Enable mouse cursor
+  ' globalAssociativeArray.touchScreen = CreateObject("roTouchScreen")
+  ' globalAssociativeArray.touchScreen.EnableCursor(true)
+
+  globalAssociativeArray.messagePort = CreateObject("roMessagePort")
+
+  globalAssociativeArray.gpioPort = CreateObject("roGpioControlPort")
+  globalAssociativeArray.gpioPort.SetPort(globalAssociativeArray.messagePort)
+
+  globalAssociativeArray.videoMode = CreateObject("roVideoMode")
+  globalAssociativeArray.videoMode.setMode("auto")
+
+  InitialiseHtmlWidget(url$)
+
+  ' set DWS on device
+  InitialiseNetworkConfiguration()
+
+  globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
+  globalAssociativeArray.networkHotPlug.setPort(globalAssociativeArray.messagePort)
+  LogText("Initialise end", "info")
+EndSub
+
+Sub InitialiseHtmlWidget(url$ as String)
+  LogText("InitialiseHtmlWidget start", "info")
+  LogText("InitialiseHtmlWidget: url = " + url$, "info")
+  globalAssociativeArray = GetGlobalAA()
+  if type(globalAssociativeArray.videoMode) = "roVideoMode"
+    width = globalAssociativeArray.videoMode.GetResX()
+    height = globalAssociativeArray.videoMode.GetResY()
   else
     width = 1920
     height = 1080
-    print "CreateHtmlWidget: creating videoMode went wrong"
   endif
-  rect = CreateObject("roRectangle", 0, 0, width, height)
+  rectangle = CreateObject("roRectangle", 0, 0, width, height)
 
-  ' config = {
-  ' nodejs_enabled:(Boolean) Enables Node.js on the widget. This value is False by default.
-  ' focus_enabled:(Boolean) Enables focus for mouse/touchscreen events.
-  ' mouse_enabled:(Boolean) Enables mouse/touchscreen events. This value is False by default.
-  ' scrollbar_enabled:(Boolean) Enables automatic scrollbars for content that does not fit into the viewport. This value is False by default.
-  ' force_gpu_rasterization_enabled:(Boolean) Enables GPU rasterization for HTML graphics. This value is True by default.
-  ' canvas_2d_acceleration_enabled:(Boolean) Enables 2D canvas acceleration. This will improve the framerate of most HTML pages that use 2D animations, but can cause out-of-memory issues with pages that use a large number of off-screen canvas surfaces.
-  ' javascript_enabled:(Boolean) Enables JavaScript on the widget. This value is True by default.
-  ' brightsign_js_objects_enabled:(Boolean) Enables BrightScript-JavaScript objects. This value is False by default.
-  ' transform:(string) Sets the screen orientation of content in the widget (note that the coordinates and dimensions of the roRectangle containing the widget are  not affected by rotation). The following values are accepted:
-  '   "identity": There is no transform (i.e. the widget content is oriented as landscape). This is the default setting.
-  '   "rot90": The widget content is rotated to portrait at 90 degrees (counter-clockwise).
-  '   "rot270": The widget content is rotated to portrait at 270 degrees (counter-clockwise).
-  ' user_agent:(string) Modifies the default user-agent string for the roHtmlWidget instance.
-  ' url:(string) The URL to use for display. See the SetUrl() entry below for more information on using URIs to access files from local storage.
-  ' user_stylesheet:(string) Applies the specified user stylesheet to pages in the widget. The parameter is a URI specifying any file: resource in the storage. The stylesheet can also be specified as inline data.
-  ' hwz_default:(string) Specifies the default HWZ behavior. See the SetHWZDefault() entry below for more information.
-  ' storage_path:(string) Creates a "Local Storage" subfolder in the specified directory. This folder is used by local storage applications such as the JavaScript storage class.
-  ' storage_quota:(double or string) Sets the total size (in bytes) allotted to all local storage applications (including IndexedDB). The default total size is 5MB.
-  ' fonts:(roArray) Specifies a list of TFF font files that can be accessed by the webpage. Font files are specified as an array of string filenames.
-  ' pcm_audio_outputs:(roArray) Configures the PCM audio output for the HTML widget. Outputs are specified as an array of roAudioOutput instances.
-  ' compressed_audio_outputs:(roArray) Configures compressed audio output (e.g. Dolby AC3 encoded audio) for the HTML widget. Outputs are specified as an array of roAudioOutput instances.
-  ' multi_channel_audio_outputs:(roArray) Configures multi-channel audio output for the HTML widget. Outputs are specified as an array of roAudioOutput instances.
-  ' inspector_server:(roAssociativeArray) Configures the Chromium Inspector for the widget.
-  ' ip_addr:(string) The Inspector IP address. This value is useful if the player is assigned more than one IP address (i.e. there are multiple network interfaces) and you wish to limit the Inspector server to one. The default value is "0.0.0.0", which allows the Inspector to accept connections using either IP address.
-  ' port:(integer) The port for the Inspector server.
-  ' security_params:(roAssociativeArray) Enables or disables Chromium security checks for cross-origin requests, local video playback from HTTP, etc.
-  ' feature:(string) The security feature to be enabled. Accepted values are "websecurity" and "camera_enabled".
-  ' enabled:(bool) Enables or disables the security feature.
-  ' }
+  globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
+  globalAssociativeArray.htmlWidget.SetUrl(url$)
+  globalAssociativeArray.htmlWidget.EnableSecurity(false)
+  globalAssociativeArray.htmlWidget.EnableJavascript(true)
+  globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
+  ' use only for debugging
+  globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
+  globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
+  globalAssociativeArray.htmlWidget.SetHWZDefault("on")
+  globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
+  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true)
+  globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
+  ' globalAssociativeArray.htmlWidget.SetAppCacheDir()
+  ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
+  ' globalAssociativeArray.htmlWidget.SetLocalStorageDir()
+  ' globalAssociativeArray.htmlWidget.SetLocalStorageQuota()
+  globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
+  globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
+  LogText("InitialiseHtmlWidget end", "info")
+EndSub
 
-  ' config = { url: "http://playr.biz/1160/84" }
+Sub InitialiseLog()
+  LogText("InitialiseLog start", "info")
+  systemTime = CreateObject("roSystemTime")
+  dateTime = systemTime.GetLocalDateTime()
 
-  ' htmlWidget = CreateObject("roHtmlWidget", rect, config)
-  htmlWidget = CreateObject("roHtmlWidget", rect)
-  htmlWidget.SetUrl(url$)
-  htmlWidget.EnableSecurity(false)
-  htmlWidget.EnableJavascript(true)
-  ' ' htmlWidget.StartInspectorServer(2999)
-  htmlWidget.EnableMouseEvents(false)
-  htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  htmlWidget.SetHWZDefault("on")
-  htmlWidget.EnableCanvas2dAcceleration(true)
-  htmlWidget.ForceGpuRasterization(true)
+  ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
+  fileName$ = "log-" + dateTime.GetYear().ToStr() + dateTime.GetMonth().ToStr() + dateTime.GetDay().ToStr() + ".txt"
+  m.logFile = CreateObject("roAppendFile", fileName$)
+  if type(m.logFile) = "roAppendFile" then
+    return
+  endif
 
-  print "CreateHtmlWidget end"
-  return htmlWidget
-End Function
+  m.logFile = CreateObject("roCreateFile", fileName$)
+  LogText("InitialiseLog end", "info")
+EndSub
+
+Sub InitialiseSerialPort()
+  LogText("InitialiseSerialPort start", "info")
+  globalAssociativeArray = GetGlobalAA()
+
+  globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
+  if type(globalAssociativeArray.serialPort) = "roSerialPort" then
+    ' use the global message port
+    ' messagePort = CreateObject("roMessagePort")
+    globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
+  else
+    LogText("Serial port could not be created", "error")
+  endif
+  LogText("InitialiseSerialPort end", "info")
+EndSub
+
+Sub InitialiseNetworkConfiguration()
+  LogText("InitialiseNetworkConfiguration start", "info")
+  globalAssociativeArray = GetGlobalAA()
+
+  globalAssociativeArray.networkConfiguration = CreateNetworkConfiguration()
+  if type(globalAssociativeArray.networkConfiguration)= "roNetworkConfiguration" then
+    LogText("InitialiseNetworkConfiguration: network configuration created", "info")
+    dwsAA = CreateObject("roAssociativeArray")
+    dwsAA["port"] = "80"
+    globalAssociativeArray.networkConfiguration.SetupDWS(dwsAA)
+    globalAssociativeArray.networkConfiguration.Apply()
+    LogText("InitialiseNetworkConfiguration: network configuration has been applied", "info")
+  else
+    LogText("InitialiseNetworkConfiguration: network configuration could not be created", "error")
+  endif
+  LogText("InitialiseNetworkConfiguration end", "info")
+EndSub
