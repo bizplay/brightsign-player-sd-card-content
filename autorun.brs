@@ -1,7 +1,14 @@
 Sub Main(args as Dynamic)
   print "autorun.brs started"
 
-  url$ = "http://play.playr.biz"
+  ' Default URL for playing Bizplay content
+  ' url$ = "http://play.playr.biz"
+  ' Specific Bizplay channel for testing BrightSign player capabilities and performance
+  url$ = "http://www..playr.biz/1160/84"
+  ' Specific URL for testing YouTube video playback
+  ' url$ = "http://playr.biz/videotest/manual/youtube.html"
+  ' Specific URL for testing Vimeo video playback
+  ' url$ = "http://playr.biz/videotest/manual/vimeo.html"
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
@@ -77,13 +84,13 @@ Sub LogText(text$ as String, level$ as String)
   globalAssociativeArray = GetGlobalAA()
   filler$ = ""
   if level$ = "info" then
-    filler$ = ""
+    filler$ = "I: "
   else if level$ = "warning" then
-    filler$ = "=> "
+    filler$ = "W: "
   else if level$ = "error" then
-    filler$ = "!!! "
+    filler$ = ">> E: "
   else if level$ = "fatal" then
-    filler$ = "<<!!!>> "
+    filler$ = ">>!! F: "
   else
     filler$ = ""
   endif
@@ -186,24 +193,26 @@ Sub InitialiseHtmlWidget(url$ as String)
   endif
   rectangle = CreateObject("roRectangle", 0, 0, width, height)
 
+  ' don't use the option hash as a third argument since that freezes
+  ' all related settings and makes changing them using the mthods impossible
   globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
   globalAssociativeArray.htmlWidget.SetUrl(url$)
   globalAssociativeArray.htmlWidget.EnableSecurity(false)
   globalAssociativeArray.htmlWidget.EnableJavascript(true)
   globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  ' use only for debugging
-  globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
   globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
   globalAssociativeArray.htmlWidget.SetHWZDefault("on")
   globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
-  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true)
+  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true) ' on by default
   globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
-  ' globalAssociativeArray.htmlWidget.SetAppCacheDir()
-  ' globalAssociativeArray.htmlWidget.SetAppCacheSize()
-  ' globalAssociativeArray.htmlWidget.SetLocalStorageDir()
-  ' globalAssociativeArray.htmlWidget.SetLocalStorageQuota()
+  globalAssociativeArray.htmlWidget.SetAppCacheDir("SD:/appcache")
+  globalAssociativeArray.htmlWidget.SetAppCacheSize(67108864) ' 64 MB
+  globalAssociativeArray.htmlWidget.SetLocalStorageDir("SD:/storage")
+  globalAssociativeArray.htmlWidget.SetLocalStorageQuota(67108864) ' 64 MB
   globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
-  globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB can use 2GB
+  globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB video cache: 2GB
+  ' use only for debugging
+  ' globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
   LogText("InitialiseHtmlWidget end", "info")
 EndSub
 
