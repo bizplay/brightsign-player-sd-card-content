@@ -1,18 +1,25 @@
 Sub Main(args as Dynamic)
   print "autorun.brs started"
 
-  ' Default URL for playing Bizplay content
+  ''' Default URL for playing Bizplay content
   ' url$ = "http://play.playr.biz"
-  ' Specific Bizplay channel for testing BrightSign player capabilities and performance
+  ''' Specific Bizplay channel for testing BrightSign player capabilities and performance
   url$ = "http://www..playr.biz/1160/84"
-  ' Specific URL for testing YouTube video playback
+  ''' Specific URL for testing YouTube video playback
   ' url$ = "http://playr.biz/videotest/manual/youtube.html"
-  ' Specific URL for testing Vimeo video playback
+  ''' Specific URL for testing Vimeo video playback
   ' url$ = "http://playr.biz/videotest/manual/vimeo.html"
+  ''' Use parameter as URL if present
   if args <> invalid and args.Count() > 0 then
     url$ = args[0]
   endif
 
+  ''' disable the BrightSign media player, wich means 
+  ''' the Chromium media player will be used
+  reg = createobject("roregistrysection", "html")
+  reg.write("use-brightsign-media-player","0")
+  reg.flush()
+  
   Initialise(url$)
   HandleEvents()
 EndSub
@@ -24,7 +31,7 @@ Sub HandleEvents()
   receivedLoadFinished = false
 
   while true
-    ' establish receivedIpAddr and receivedLoadFinished
+    ''' establish receivedIpAddr and receivedLoadFinished
     event = wait(0, globalAssociativeArray.messagePort)
     LogText("HandleEvents: Received event: " + type(event), "info")
     if type(event) = "roNetworkAttached" then
@@ -97,7 +104,7 @@ Sub LogText(text$ as String, level$ as String)
 
   print filler$;text$
   if type(m.logFile) = "roAppendFile" then
-    ' To use this: msgPort.PostBSMessage({text: "my message"});
+    ''' To use this: msgPort.PostBSMessage({text: "my message"});
     m.logFile.SendLine(filler$ + text$)
     m.logFile.AsyncFlush()
   endif
@@ -128,7 +135,7 @@ Function GetIPAddress() as String
   if type(globalAssociativeArray.networkConfiguration) = "roNetworkConfiguration" then
     currentConfig = globalAssociativeArray.networkConfiguration.GetCurrentConfig()
     if currentConfig.ip4_address <> "" then
-      ' We already have an IP addr
+      ''' an IP addr is already present
       ipAddr = currentConfig.ip4_address
       LogText("GetIPAddress: Assigned IP address: " + ipAddr, "info")
     else
@@ -146,11 +153,11 @@ Sub Initialise(url$ as String)
   LogText("Initialise start", "info")
   globalAssociativeArray = GetGlobalAA()
 
-  ' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
+  ''' use no or 1 zone (having 1 zone makes the image layer be on top of the video layer by default)
   ' EnableZoneSupport(1)
   EnableZoneSupport(false)
 
-  ' for debuging/diagnostics; open log and serial port
+  ''' for debuging/diagnostics; open log and serial port
   InitialiseLog()
   LogText("*******************************************************************", "info")
   systemTime = CreateObject("roSystemTime")
@@ -172,7 +179,7 @@ Sub Initialise(url$ as String)
 
   InitialiseHtmlWidget(url$)
 
-  ' set DWS on device
+  ''' set DWS on device
   InitialiseNetworkConfiguration()
 
   globalAssociativeArray.networkHotPlug = CreateObject("roNetworkHotplug")
@@ -193,26 +200,62 @@ Sub InitialiseHtmlWidget(url$ as String)
   endif
   rectangle = CreateObject("roRectangle", 0, 0, width, height)
 
-  ' don't use the option hash as a third argument since that freezes
-  ' all related settings and makes changing them using the mthods impossible
-  globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
-  globalAssociativeArray.htmlWidget.SetUrl(url$)
-  globalAssociativeArray.htmlWidget.EnableSecurity(false)
-  globalAssociativeArray.htmlWidget.EnableJavascript(true)
-  globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
-  globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
-  globalAssociativeArray.htmlWidget.SetHWZDefault("on")
-  globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
-  globalAssociativeArray.htmlWidget.ForceGpuRasterization(true) ' on by default
-  globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
-  globalAssociativeArray.htmlWidget.SetAppCacheDir("SD:/appcache")
-  globalAssociativeArray.htmlWidget.SetAppCacheSize(67108864) ' 64 MB
-  globalAssociativeArray.htmlWidget.SetLocalStorageDir("SD:/storage")
-  globalAssociativeArray.htmlWidget.SetLocalStorageQuota(67108864) ' 64 MB
-  globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
-  globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB video cache: 2GB
-  ' use only for debugging
+  ''' don't use the option hash as a third argument since that freezes
+  ''' all related settings and makes changing them using the mthods impossible
+  ''' Using the globalAssociativeArray.htmlWidget is currenlty considered 
+  ''' legacy => disabling this, see new config below
+  'globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle)
+  'globalAssociativeArray.htmlWidget.SetUrl(url$)
+  'globalAssociativeArray.htmlWidget.EnableSecurity(false)
+  'globalAssociativeArray.htmlWidget.EnableJavascript(true)
+  'globalAssociativeArray.htmlWidget.AllowJavaScriptUrls({ all: "*" })
+  'globalAssociativeArray.htmlWidget.EnableMouseEvents(false)
+  'globalAssociativeArray.htmlWidget.SetHWZDefault("on")
+  'globalAssociativeArray.htmlWidget.EnableCanvas2dAcceleration(true)
+  'globalAssociativeArray.htmlWidget.ForceGpuRasterization(true) ' on by default
+  'globalAssociativeArray.htmlWidget.setPort(globalAssociativeArray.messagePort)
+  'globalAssociativeArray.htmlWidget.SetAppCacheDir("SD:/appcache")
+  'globalAssociativeArray.htmlWidget.SetAppCacheSize(67108864) ' 64 MB
+  'globalAssociativeArray.htmlWidget.SetLocalStorageDir("SD:/storage")
+  'globalAssociativeArray.htmlWidget.SetLocalStorageQuota(67108864) ' 64 MB
+  'globalAssociativeArray.htmlWidget.SetWebDatabaseDir("SD:/webdb")
+  'globalAssociativeArray.htmlWidget.SetWebDatabaseQuota("2147483648") ' IndexedDB video cache: 2GB
+  ''' use only for debugging
   ' globalAssociativeArray.htmlWidget.StartInspectorServer(2999)
+
+  ''' Setting Audio parameters
+  audioRouting = {
+      mode: "prerouted"
+  }
+  audioConfiguration = CreateObject("roAudioConfiguration")
+  audioConfiguration.ConfigureAudio(audioRouting)
+
+  ''' Audio configuration forcing both Analog and Hdmi
+  outputs = CreateObject("roArray", 2, 1)
+  outputs[0] = "hdmi"
+  outputs[1] = "analog"
+
+  ''' Static Initialization of HTML Widget firmware 8.x and later
+  ''' all storage quotas are combined, all storage locations are combined
+  ''' pcm_audio_outputs is a new configuration setting
+  config = {
+    hwz_default: "on",
+    security_params: { websecurity: false}
+    javascript_enabled: true,
+    mouse_enabled: false,
+    storage_path: "SD:/storage",
+    storage_quota: "2147483648",
+    brightsign_js_objects_enabled: true,
+    pcm_audio_outputs: outputs,
+    port: globalAssociativeArray.messagePort,
+    url: url$
+  }
+  globalAssociativeArray.htmlWidget = CreateObject("roHtmlWidget", rectangle, config)
+  jsClasses = CreateObject("roAssociativeArray")
+  jsClasses["all"] = [ "*" ]
+  jsClasses["*"] = [ "*" ]
+  globalAssociativeArray.htmlWidget.AllowJavaScriptURLs(jsClasses)
+
   LogText("InitialiseHtmlWidget end", "info")
 EndSub
 
@@ -221,7 +264,7 @@ Sub InitialiseLog()
   systemTime = CreateObject("roSystemTime")
   dateTime = systemTime.GetLocalDateTime()
 
-  ' if there is an existing log file for today, just append to it. otherwise, create a new one to use
+  ''' if there is an existing log file for today, just append to it. otherwise, create a new one to use
   fileName$ = "log-" + dateTime.GetYear().ToStr() + dateTime.GetMonth().ToStr() + dateTime.GetDay().ToStr() + ".txt"
   m.logFile = CreateObject("roAppendFile", fileName$)
   if type(m.logFile) = "roAppendFile" then
@@ -238,8 +281,8 @@ Sub InitialiseSerialPort()
 
   globalAssociativeArray.serialPort = CreateObject("roSerialPort", 0, 19200)
   if type(globalAssociativeArray.serialPort) = "roSerialPort" then
-    ' use the global message port
-    ' messagePort = CreateObject("roMessagePort")
+    ''' use the global message port
+    ''' messagePort = CreateObject("roMessagePort")
     globalAssociativeArray.serialPort.SetLineEventPort(globalAssociativeArray.messagePort)
   else
     LogText("Serial port could not be created", "error")
